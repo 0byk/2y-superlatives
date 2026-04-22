@@ -41,9 +41,11 @@ function createAutocomplete(container, opts = {}) {
   input.type = "search";
   input.className = "ac-input";
   input.placeholder = placeholder;
-  // "new-password" is the most reliable way to suppress iOS AutoFill Contact —
-  // iOS never offers contact suggestions on inputs with this autocomplete value.
-  input.setAttribute("autocomplete", "new-password");
+  // iOS ignores autocomplete="off" for name-like fields and shows the
+  // AutoFill Contact bar. "new-password" suppresses it on iOS without
+  // triggering Chrome's password manager on desktop.
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  input.setAttribute("autocomplete", isIOS ? "new-password" : "off");
   input.setAttribute("autocorrect", "off");
   input.setAttribute("autocapitalize", "off");
   input.spellcheck = false;
