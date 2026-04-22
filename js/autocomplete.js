@@ -41,15 +41,16 @@ function createAutocomplete(container, opts = {}) {
   input.type = "search";
   input.className = "ac-input";
   input.placeholder = placeholder;
-  // Safari (macOS + iOS) ignores autocomplete="off" for name-like fields
-  // and offers Contacts autofill. "new-password" suppresses it on all
-  // Safari without triggering Chrome/Firefox's password manager.
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  input.setAttribute("autocomplete", isSafari ? "new-password" : "off");
+  input.setAttribute("autocomplete", "off");
   input.setAttribute("autocorrect", "off");
   input.setAttribute("autocapitalize", "off");
   input.spellcheck = false;
   if (inputId) input.id = inputId;
+  // Safari ignores autocomplete="off" for name-like inputs and shows the
+  // Contacts autofill bar. The only reliable fix: start the input as readonly
+  // (Safari never offers autofill on readonly inputs), then remove readonly
+  // on focus so the user can type. Blur restores readonly while unlocked.
+  input.setAttribute("readonly", "");
 
   const clearBtn = document.createElement("button");
   clearBtn.type = "button";
@@ -181,7 +182,7 @@ function createAutocomplete(container, opts = {}) {
     selectedValue  = null;
     input.value    = "";
     isLocked       = false;
-    input.readOnly = false;
+    // Don't set readOnly here — the focus handler removes it when input.focus() fires.
     clearBtn.style.display = "none";
     inputWrap.classList.remove("ac-input-wrap--selected");
     closeDropdown();
@@ -255,11 +256,18 @@ function createAutocomplete(container, opts = {}) {
 
   input.addEventListener("blur", () => {
     // Short delay so mousedown on a dropdown option fires first.
-    setTimeout(closeDropdown, 150);
+    setTimeout(() => {
+      closeDropdown();
+      // Restore readonly when not locked so Safari never sees a
+      // writable name-like input at rest (prevents Contacts autofill).
+      if (!isLocked) input.setAttribute("readonly", "");
+    }, 150);
   });
 
   input.addEventListener("focus", () => {
     if (isLocked) return;
+    // Remove readonly so the user can type.
+    input.removeAttribute("readonly");
     const q = input.value.trim();
     if (q.length >= MIN_QUERY_LENGTH) {
       const { shown, overflow } = search(q);
