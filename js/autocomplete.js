@@ -125,7 +125,7 @@ function createAutocomplete(container, opts = {}) {
       li.dataset.index = i;
 
       if (r.isWriteInOption) {
-        li.innerHTML = `Add <strong>${escapeHtml(r.name)}</strong> as a write-in`;
+        li.innerHTML = 'Add \u201C' + escapeHtml(r.name) + '\u201D as a write-in';
       } else {
         // Highlight matching portion.
         const q   = input.value.trim();
@@ -279,7 +279,7 @@ function createAutocomplete(container, opts = {}) {
     if (idx === -1) return escapeHtml(name);
     return (
       escapeHtml(name.slice(0, idx)) +
-      "<strong>" + escapeHtml(name.slice(idx, idx + query.length)) + "</strong>" +
+      '<span class="ac-hl">' + escapeHtml(name.slice(idx, idx + query.length)) + '</span>' +
       escapeHtml(name.slice(idx + query.length))
     );
   }

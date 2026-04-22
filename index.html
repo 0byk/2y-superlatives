@@ -96,33 +96,11 @@
        ════════════════════════════════════════ -->
   <div class="view" id="view-ballot">
 
-    <!-- Progress bar (sticky below header) -->
-    <div class="progress-bar-wrap">
-      <div class="container">
-        <div class="progress-bar-inner">
-          <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="33" aria-valuenow="0">
-            <div class="progress-bar__fill" id="progress-bar-fill"></div>
-          </div>
-          <span class="progress-label" id="progress-label">0 of 33 filled</span>
-        </div>
-      </div>
-    </div>
-
     <!-- Ballot cards -->
     <div class="container">
       <div class="ballot-cards" id="ballot-cards">
         <!-- Cards injected by app.js -->
       </div>
-    </div>
-
-    <!-- Error banner (shown on submit failure) -->
-    <div class="submit-error" id="submit-error" style="display:none" role="alert"></div>
-
-    <!-- Sticky submit button -->
-    <div class="sticky-submit">
-      <button class="submit-btn" id="submit-btn" disabled>
-        Fill in at least one category to submit
-      </button>
     </div>
   </div>
 
@@ -157,6 +135,47 @@
         <button class="btn-secondary" id="cancel-submit-btn">Go back</button>
         <button class="btn-primary"   id="confirm-submit-btn">Submit ballot</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       Bottom Dock (progress + submit)
+       ════════════════════════════════════════ -->
+  <div class="bottom-dock" id="bottom-dock" style="display:none">
+    <div class="container">
+      <div class="dock-progress-row">
+        <div class="dock-bar"><div class="dock-bar-fill" id="dock-bar-fill"></div></div>
+        <span class="dock-count" id="dock-count">0 of 33 filled</span>
+      </div>
+      <div class="dock-actions">
+        <button class="dock-jump-btn" id="dock-jump-btn" type="button" style="display:none">↑ Jump to</button>
+        <button class="submit-btn" id="submit-btn" disabled type="button">Fill in at least one to submit</button>
+      </div>
+    </div>
+    <div class="submit-error" id="submit-error" style="display:none" role="alert"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       Celebration Overlay
+       ════════════════════════════════════════ -->
+  <div id="celebration-overlay" aria-hidden="true">
+    <div class="celebration-center">
+      <div class="celebration-cap">🎓</div>
+      <div class="celebration-label">Class of 2026 ✦</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       Jump Sheet (bottom sheet nav)
+       ════════════════════════════════════════ -->
+  <div class="jump-sheet" id="jump-sheet" aria-hidden="true">
+    <div class="jump-sheet-backdrop" id="jump-sheet-backdrop"></div>
+    <div class="jump-sheet-panel" role="dialog" aria-label="Jump to category">
+      <div class="jump-sheet-header">
+        <span class="jump-sheet-title">Jump to</span>
+        <button class="jump-sheet-close" id="jump-sheet-close" aria-label="Close">✕</button>
+      </div>
+      <div class="jump-sheet-list" id="jump-sheet-list"></div>
     </div>
   </div>
 

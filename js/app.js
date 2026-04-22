@@ -17,6 +17,7 @@ const LS_SUBMITTED = "ballot_submitted";
 
 let _votes         = {}; // { [superlativeId]: { nomineeName, isWriteIn } | { nomineeName1, nomineeName2, isWriteIn } }
 let _autocompletes = {}; // { [superlativeId]: autocomplete instance(s) }
+let _jumpItems     = {}; // { [superlativeId]: HTMLButtonElement }
 
 // ── Init ───────────────────────────────────────────────────────────────────────
 
@@ -49,6 +50,14 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("confirm-modal").addEventListener("click", e => {
     if (e.target === document.getElementById("confirm-modal")) closeConfirmModal();
   });
+
+  // Jump sheet listeners.
+  document.getElementById("dock-jump-btn").addEventListener("click", openJumpSheet);
+  document.getElementById("jump-sheet-close").addEventListener("click", closeJumpSheet);
+  document.getElementById("jump-sheet-backdrop").addEventListener("click", closeJumpSheet);
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeJumpSheet();
+  });
 });
 
 // ── Views ──────────────────────────────────────────────────────────────────────
@@ -57,6 +66,9 @@ function showView(name) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("view--active"));
   const el = document.getElementById("view-" + name);
   if (el) el.classList.add("view--active");
+  // Show the bottom dock only during the ballot view.
+  const dock = document.getElementById("bottom-dock");
+  if (dock) dock.style.display = name === "ballot" ? "" : "none";
 }
 
 // ── Ballot rendering ──────────────────────────────────────────────────────────
@@ -65,6 +77,7 @@ function renderBallot() {
   const container = document.getElementById("ballot-cards");
   container.innerHTML = "";
   _autocompletes = {};
+  _jumpItems = {};
 
   SUPERLATIVES.forEach((sup, idx) => {
     const card = document.createElement("div");
@@ -117,6 +130,8 @@ function renderBallot() {
           updateCardState(card, sup);
           updateProgress();
           updateSubmitButton();
+          updatePairWarning(sup.id);
+          updateJumpSheet(sup.id);
         },
         onClear: () => {
           if (_votes[sup.id]) delete _votes[sup.id].nomineeName1;
@@ -125,6 +140,8 @@ function renderBallot() {
           updateCardState(card, sup);
           updateProgress();
           updateSubmitButton();
+          updatePairWarning(sup.id);
+          updateJumpSheet(sup.id);
         },
       });
 
@@ -138,6 +155,8 @@ function renderBallot() {
           updateCardState(card, sup);
           updateProgress();
           updateSubmitButton();
+          updatePairWarning(sup.id);
+          updateJumpSheet(sup.id);
         },
         onClear: () => {
           if (_votes[sup.id]) delete _votes[sup.id].nomineeName2;
@@ -146,6 +165,8 @@ function renderBallot() {
           updateCardState(card, sup);
           updateProgress();
           updateSubmitButton();
+          updatePairWarning(sup.id);
+          updateJumpSheet(sup.id);
         },
       });
 
@@ -157,6 +178,13 @@ function renderBallot() {
 
       fields.appendChild(wrap1);
       fields.appendChild(wrap2);
+
+      // Pair warning (shown when exactly one of the two fields is filled).
+      const pairWarn = document.createElement("p");
+      pairWarn.className = "pair-warning";
+      pairWarn.id = "pair-warn-" + sup.id;
+      pairWarn.textContent = "Add a second name for this to count.";
+      body.appendChild(pairWarn);
     } else {
       const wrap = document.createElement("div");
       wrap.className = "ballot-card__ac";
@@ -170,6 +198,7 @@ function renderBallot() {
           updateCardState(card, sup);
           updateProgress();
           updateSubmitButton();
+          updateJumpSheet(sup.id);
           scrollToNextCard(sup.id);
         },
         onClear: () => {
@@ -178,6 +207,7 @@ function renderBallot() {
           updateCardState(card, sup);
           updateProgress();
           updateSubmitButton();
+          updateJumpSheet(sup.id);
         },
       });
 
@@ -191,6 +221,7 @@ function renderBallot() {
     updateCardState(card, sup);
   });
 
+  buildJumpSheet();
   updateProgress();
   updateSubmitButton();
 }
@@ -224,10 +255,11 @@ function scrollToNextCard(currentId) {
 function updateProgress() {
   const filled = countFilledVotes();
   const total  = SUPERLATIVES.length;
-  const bar    = document.getElementById("progress-bar-fill");
-  const label  = document.getElementById("progress-label");
-  if (bar)   bar.style.width = Math.round((filled / total) * 100) + "%";
-  if (label) label.textContent = `${filled} of ${total} filled`;
+  // Dock progress bar + count.
+  const dockBar   = document.getElementById("dock-bar-fill");
+  const dockCount = document.getElementById("dock-count");
+  if (dockBar)   dockBar.style.width = Math.round((filled / total) * 100) + "%";
+  if (dockCount) dockCount.textContent = `${filled} of ${total} filled`;
 }
 
 function countFilledVotes() {
@@ -241,13 +273,16 @@ function countFilledVotes() {
 // ── Submit button ─────────────────────────────────────────────────────────────
 
 function updateSubmitButton() {
-  const btn = document.getElementById("submit-btn");
+  const btn     = document.getElementById("submit-btn");
+  const jumpBtn = document.getElementById("dock-jump-btn");
   if (!btn) return;
   const filled = countFilledVotes();
   btn.disabled = filled === 0;
   btn.textContent = filled === 0
     ? "Fill in at least one category to submit"
     : "Submit My Ballot";
+  // Show jump button only when at least one category is filled.
+  if (jumpBtn) jumpBtn.style.display = filled > 0 ? "block" : "none";
 }
 
 // ── Submit flow ───────────────────────────────────────────────────────────────
@@ -318,7 +353,7 @@ async function submitBallot() {
     // Clear the in-progress draft.
     localStorage.removeItem(LS_DRAFT);
 
-    showView("confirmation");
+    runCelebration(() => showView("confirmation"));
 
   } catch (err) {
     console.error(err);
@@ -388,4 +423,150 @@ async function apiFetch(body) {
 
 function isVotingClosed() {
   return Date.now() > VOTING_DEADLINE.getTime();
+}
+
+// ── Celebration animation ─────────────────────────────────────────────────────
+
+function runCelebration(onComplete) {
+  // Respect prefers-reduced-motion — skip straight to confirmation.
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    onComplete();
+    return;
+  }
+
+  const overlay = document.getElementById("celebration-overlay");
+  if (!overlay) { onComplete(); return; }
+
+  overlay.classList.add("celebration--active");
+
+  const palette = ["#990000", "#D4A574", "#F5F0E8"];
+  const particles = [];
+
+  // 20 🎓 emoji particles.
+  for (let i = 0; i < 20; i++) {
+    const el = document.createElement("span");
+    el.className = "confetti-particle";
+    el.textContent = "🎓";
+    el.style.left = (5 + Math.random() * 90) + "vw";
+    const dur = 1800 + Math.random() * 1400;
+    const delay = Math.random() * 600;
+    el.style.animation = `fall ${dur}ms ease-in ${delay}ms both`;
+    overlay.appendChild(el);
+    particles.push(el);
+  }
+
+  // 10 colored squares.
+  for (let i = 0; i < 10; i++) {
+    const el = document.createElement("div");
+    el.className = "confetti-square";
+    el.style.left = (5 + Math.random() * 90) + "vw";
+    el.style.background = palette[i % palette.length];
+    const dur = 1800 + Math.random() * 1400;
+    const delay = Math.random() * 600;
+    el.style.animation = `fall ${dur}ms ease-in ${delay}ms both`;
+    overlay.appendChild(el);
+    particles.push(el);
+  }
+
+  // After 2400ms, fade out then call onComplete.
+  setTimeout(() => {
+    overlay.style.transition = "opacity 350ms ease";
+    overlay.style.opacity = "0";
+    setTimeout(() => {
+      overlay.classList.remove("celebration--active");
+      overlay.style.transition = "";
+      overlay.style.opacity = "";
+      // Remove particles.
+      particles.forEach(p => p.remove());
+      onComplete();
+    }, 350);
+  }, 2400);
+}
+
+// ── Pair warning ──────────────────────────────────────────────────────────────
+
+function updatePairWarning(supId) {
+  const vote = _votes[supId];
+  const warn = document.getElementById("pair-warn-" + supId);
+  if (!warn) return;
+  const has1 = !!(vote && vote.nomineeName1);
+  const has2 = !!(vote && vote.nomineeName2);
+  // XOR: show when exactly one is filled.
+  warn.style.display = (has1 !== has2) ? "block" : "none";
+}
+
+// ── Jump sheet ────────────────────────────────────────────────────────────────
+
+function buildJumpSheet() {
+  const list = document.getElementById("jump-sheet-list");
+  if (!list) return;
+  list.innerHTML = "";
+  _jumpItems = {};
+
+  SUPERLATIVES.forEach((sup, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "jump-item";
+    btn.type = "button";
+    btn.setAttribute("data-sup-id", sup.id);
+
+    const num = document.createElement("span");
+    num.className = "jump-item__num";
+    num.textContent = idx + 1;
+
+    const title = document.createElement("span");
+    title.className = "jump-item__title";
+    title.textContent = sup.title;
+
+    const check = document.createElement("span");
+    check.className = "jump-item__check";
+    check.textContent = "✓";
+
+    btn.appendChild(num);
+    btn.appendChild(title);
+    btn.appendChild(check);
+
+    btn.addEventListener("click", () => {
+      closeJumpSheet();
+      const card = document.getElementById("card-" + sup.id);
+      if (card) {
+        setTimeout(() => {
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 50);
+      }
+    });
+
+    list.appendChild(btn);
+    _jumpItems[sup.id] = btn;
+  });
+
+  // Sync initial filled states (for draft restore).
+  SUPERLATIVES.forEach(sup => updateJumpSheet(sup.id));
+}
+
+function updateJumpSheet(supId) {
+  const btn = _jumpItems[supId];
+  if (!btn) return;
+  const sup = SUPERLATIVES.find(s => s.id === supId);
+  if (!sup) return;
+  const vote = _votes[supId];
+  const filled = sup.type === "duo"
+    ? !!(vote?.nomineeName1 && vote?.nomineeName2)
+    : !!vote?.nomineeName;
+  btn.classList.toggle("jump-item--filled", filled);
+}
+
+function openJumpSheet() {
+  const sheet = document.getElementById("jump-sheet");
+  if (!sheet) return;
+  sheet.classList.add("jump-sheet--open");
+  sheet.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeJumpSheet() {
+  const sheet = document.getElementById("jump-sheet");
+  if (!sheet) return;
+  sheet.classList.remove("jump-sheet--open");
+  sheet.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
 }
