@@ -19,7 +19,7 @@ const MIN_QUERY_LENGTH     = 1;
  * @returns {{ getValue, setValue, clear, destroy }}
  */
 function createAutocomplete(container, opts = {}) {
-  const { placeholder = "Start typing a name…", label, onSelect, onClear, inputId } = opts;
+  const { placeholder = "Search classmates…", label, onSelect, onClear, inputId } = opts;
 
   // ── DOM ────────────────────────────────────────────────────────────────────
 

@@ -190,7 +190,7 @@ function renderBallot() {
       wrap.className = "ballot-card__ac";
 
       const ac = createAutocomplete(wrap, {
-        placeholder: "Start typing a name…",
+        placeholder: "Search classmates…",
         inputId: sup.id,
         onSelect: (val) => {
           _votes[sup.id] = { nomineeName: val.name, isWriteIn: val.isWriteIn };
