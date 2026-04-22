@@ -762,8 +762,12 @@ input, button { font-size: 1rem; }
 
 .pair-warning {
   font-size: .78rem;
-  color: var(--gold-dark);
-  margin-top: .375rem;
+  color: #92400e;
+  background: #FEF3C7;
+  border: 1px solid #FCD34D;
+  border-radius: 6px;
+  padding: .3rem .6rem;
+  margin-top: .5rem;
   display: none;
 }
 
@@ -771,9 +775,9 @@ input, button { font-size: 1rem; }
 
 .ac-hl {
   color: var(--red);
-  font-weight: 600;
-  background: rgba(153,0,0,.06);
+  background: rgba(153,0,0,.08);
   border-radius: 2px;
+  padding: 0 1px;
 }
 
 /* ── Confirmation view ─────────────────────────────────────────────────────── */
@@ -872,6 +876,17 @@ input, button { font-size: 1rem; }
 }
 
 .modal__body strong { color: var(--ink); }
+
+.modal__pair-warning {
+  font-size: .85rem;
+  color: #92400e;
+  background: #FEF3C7;
+  border: 1px solid #FCD34D;
+  border-radius: var(--radius-sm);
+  padding: .625rem .875rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
 
 .modal__actions {
   display: flex;
@@ -1017,7 +1032,6 @@ input, button { font-size: 1rem; }
 
 .ac-option--writein {
   color: var(--gold-dark);
-  font-style: italic;
   border-top: 1px dashed var(--border);
 }
 

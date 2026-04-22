@@ -287,12 +287,39 @@ function updateSubmitButton() {
 
 // ── Submit flow ───────────────────────────────────────────────────────────────
 
+function countHalfFilledPairs() {
+  return SUPERLATIVES.filter(sup => {
+    if (sup.type !== "duo") return false;
+    const vote = _votes[sup.id];
+    const has1 = !!(vote && vote.nomineeName1);
+    const has2 = !!(vote && vote.nomineeName2);
+    return has1 !== has2; // exactly one of the two is filled
+  }).length;
+}
+
 function openConfirmModal() {
-  const filled  = countFilledVotes();
-  const skipped = SUPERLATIVES.length - filled;
+  const filled     = countFilledVotes();
+  const skipped    = SUPERLATIVES.length - filled;
+  const halfPairs  = countHalfFilledPairs();
+
   document.getElementById("modal-filled-count").textContent  = filled;
   document.getElementById("modal-total-count").textContent   = SUPERLATIVES.length;
   document.getElementById("modal-skipped-count").textContent = skipped;
+
+  // Show pair warning if any pair categories are half-filled.
+  const pairWarn  = document.getElementById("modal-pair-warning");
+  const pairCount = document.getElementById("modal-pair-count");
+  if (pairWarn && pairCount) {
+    if (halfPairs > 0) {
+      pairCount.textContent = halfPairs === 1
+        ? "1 pair category only has one name filled"
+        : `${halfPairs} pair categories only have one name filled`;
+      pairWarn.style.display = "block";
+    } else {
+      pairWarn.style.display = "none";
+    }
+  }
+
   document.getElementById("confirm-modal").classList.add("modal--open");
   document.body.style.overflow = "hidden";
 }
