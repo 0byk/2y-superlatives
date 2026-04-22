@@ -959,6 +959,9 @@ input, button { font-size: 1rem; }
   -webkit-appearance: none;
 }
 
+/* Suppress Safari's built-in search-cancel button; we have our own. */
+.ac-input::-webkit-search-cancel-button { display: none; }
+
 .ac-input:focus {
   outline: none;
   border-color: var(--red);

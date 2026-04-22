@@ -38,7 +38,7 @@ function createAutocomplete(container, opts = {}) {
   inputWrap.className = "ac-input-wrap";
 
   const input = document.createElement("input");
-  input.type = "text";
+  input.type = "search";
   input.className = "ac-input";
   input.placeholder = placeholder;
   input.autocomplete = "off";
