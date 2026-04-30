@@ -6,8 +6,8 @@
 
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzmYywPG0sEYaoEOY2uD0Y8VvB7Gpm9cTcVNNCWDL2ikhW8NXecBNU9fiEIB0YYPn6mUA/exec";
 
-// Voting closes April 30, 2026 at 11:59pm ET (UTC-4 in April).
-const VOTING_DEADLINE = new Date("2026-05-01T03:59:00Z");
+// Voting closed April 30, 2026 at 11:59pm ET (UTC-4 in April).
+const VOTING_DEADLINE = new Date("2026-04-30T00:00:00Z");
 
 // localStorage keys.
 const LS_DRAFT     = "superlatives_draft";

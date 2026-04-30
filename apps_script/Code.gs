@@ -10,9 +10,8 @@
 
 var ADMIN_PASSWORD = "2Y2026!";
 
-// April 30 2026 11:59 PM Eastern = May 1 2026 03:59:00 UTC
-// Using Date.UTC() avoids ISO string parsing quirks across runtimes.
-var VOTING_DEADLINE_MS = Date.UTC(2026, 4, 1, 3, 59, 0); // month is 0-indexed
+// Closed April 30 2026 — deadline set to past to lock submissions.
+var VOTING_DEADLINE_MS = Date.UTC(2026, 3, 30, 0, 0, 0); // month is 0-indexed
 
 // Sheet tab names — must match exactly (lowercase, no spaces).
 var SUBMISSIONS_SHEET = "submissions";
